@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CAPITAL ROLEPLAY BET</title>
+    <!-- Font Awesome para Ícones Profissionais -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <style>
         :root {
             --bg-color: #0d0d0d;
@@ -295,7 +293,7 @@
             100% { transform: scale(1); }
         }
 
-        /* 🏆 SEÇÃO DE RANKING TOP 10 🏆 */
+        /* TABELA DE RANKING TOP 10 */
         .ranking-box {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -458,6 +456,7 @@
 </head>
 <body>
 
+    <!-- 1. TELA DE LOADING (5 SEGUNDOS) -->
     <div id="loading-screen">
         <div class="loading-title">CAPITAL ROLEPLAY</div>
         <div class="progress-container">
@@ -465,16 +464,17 @@
         </div>
     </div>
 
+    <!-- 2. TELA DE AUTENTICAÇÃO (LOGIN / REGISTRO) -->
     <div id="auth-screen">
         <div class="auth-container">
             <div class="auth-tabs">
-                <div class="auth-tab active" onclick="switchAuthTab('login')">LOGIN</div>
-                <div class="auth-tab" onclick="switchAuthTab('register')">REGISTRO</div>
+                <div class="auth-tab active" id="tab-login">LOGIN</div>
+                <div class="auth-tab" id="tab-register">REGISTRO</div>
             </div>
             
             <h2 id="auth-title" style="text-align: center; margin-bottom: 20px; font-size: 1.2rem;">ENTRAR NA CONTA</h2>
             
-            <form id="auth-form" onsubmit="handleAuth(event)">
+            <form id="auth-form">
                 <div class="input-group">
                     <i class="fa-solid fa-user"></i>
                     <input type="text" id="auth-username" placeholder="Nome de usuário no RP" required>
@@ -489,15 +489,16 @@
         </div>
     </div>
 
+    <!-- 3. TELA PRINCIPAL (DASHBOARD) -->
     <div id="main-screen">
         <header>
             <div class="logo-area">CAPITAL <span>RP</span></div>
             <div class="header-actions">
-                <div class="chips-display" onclick="openModal('shop-modal')">
+                <div class="chips-display" id="btn-shop">
                     <i class="fa-solid fa-coins"></i>
                     <span id="global-chips-counter">0</span>
                 </div>
-                <div class="profile-btn" onclick="openModal('profile-modal')">
+                <div class="profile-btn" id="btn-profile">
                     <i class="fa-solid fa-user-gear"></i>
                     <span id="header-username">Jogador</span>
                 </div>
@@ -511,7 +512,8 @@
                 <span><i class="fa-solid fa-gamepad" style="color: var(--primary);"></i> L.A.C.O RP</span>
             </div>
 
-            <div class="game-card" onclick="openModal('tiger-modal')">
+            <!-- CARD DO TIGRINHO -->
+            <div class="game-card" id="btn-game">
                 <div class="tiger-logo-box">
                     <i class="fa-solid fa-cat"></i>
                 </div>
@@ -519,6 +521,7 @@
                 <p style="color: #888; font-size: 0.9rem; margin-top: 5px;">Multiplique suas fichas no Tigrinho do Servidor</p>
             </div>
 
+            <!-- TABELA DE RANKING TOP 10 -->
             <div class="ranking-box">
                 <div class="ranking-title"><i class="fa-solid fa-trophy"></i> TOP 10 RICASSO DA CAPITAL</div>
                 <table class="ranking-table">
@@ -537,9 +540,10 @@
         </div>
     </div>
 
+    <!-- MODAL DO JOGO DO TIGRINHO -->
     <div id="tiger-modal" class="modal">
         <div class="modal-content">
-            <span class="close-modal" onclick="closeModal('tiger-modal')">&times;</span>
+            <span class="close-modal" id="close-tiger">&times;</span>
             <h2 style="color: var(--primary);"><i class="fa-solid fa-cat"></i> FORTUNE TIGER</h2>
             <p style="font-size: 0.85rem; color: #aaa;">Combine os símbolos! Bombas tiram suas fichas!</p>
             
@@ -551,19 +555,20 @@
 
             <p style="margin-bottom: 10px; font-weight: bold; font-size: 0.9rem;">Escolha o valor da aposta:</p>
             <div class="bet-selector">
-                <button class="bet-option selected" onclick="setBet(5)">5</button>
-                <button class="bet-option" onclick="setBet(10)">10</button>
-                <button class="bet-option" onclick="setBet(15)">15</button>
+                <button class="bet-option selected" data-value="5">5</button>
+                <button class="bet-option" data-value="10">10</button>
+                <button class="bet-option" data-value="15">15</button>
             </div>
 
-            <button class="btn" id="spin-btn" onclick="spinTiger()">GIRAR ROLETAR</button>
+            <button class="btn" id="spin-btn">GIRAR ROLETAR</button>
             <div id="game-msg" class="status-msg"></div>
         </div>
     </div>
 
+    <!-- MODAL DE COMPRA / INFO DE FICHAS -->
     <div id="shop-modal" class="modal">
         <div class="modal-content">
-            <span class="close-modal" onclick="closeModal('shop-modal')">&times;</span>
+            <span class="close-modal" id="close-shop">&times;</span>
             <h2><i class="fa-solid fa-wallet" style="color: var(--primary);"></i> SISTEMA DE FICHAS</h2>
             <p style="margin-top: 10px; font-size: 0.95rem; color: #ccc;">Para resgatar suas fichas por dinheiro dentro do servidor ou comprar mais pacotes de fichas, entre em contato diretamente com a nossa administração pelos links abaixo:</p>
             
@@ -578,9 +583,10 @@
         </div>
     </div>
 
+    <!-- MODAL DE PERFIL / ACESSO ADM -->
     <div id="profile-modal" class="modal">
         <div class="modal-content">
-            <span class="close-modal" onclick="closeModal('profile-modal')">&times;</span>
+            <span class="close-modal" id="close-profile">&times;</span>
             <h2><i class="fa-solid fa-id-card"></i> PERFIL DO JOGADOR</h2>
             <p style="margin: 15px 0; font-size: 1.1rem;">Nome: <span id="profile-name-display" style="color: var(--primary); font-weight: bold;">-</span></p>
             <p style="font-size: 0.9rem; color: #888;">Cargo no Site: <span id="profile-role-display">Membro</span></p>
@@ -590,9 +596,10 @@
                     <i class="fa-solid fa-key"></i>
                     <input type="password" id="admin-code-input" placeholder="Código de Verificação de Cargo">
                 </div>
-                <button class="btn" style="background: #333;" onclick="checkAdminCode()">Verificar Chave</button>
+                <button class="btn" style="background: #333;" id="btn-verify-admin">Verificar Chave</button>
             </div>
 
+            <!-- PAINEL DE CONTROLE SECRETO DO ADM -->
             <div id="admin-panel" class="admin-section" style="display: none;">
                 <h3 style="color: var(--secondary); margin-bottom: 15px;"><i class="fa-solid fa-crown"></i> PAINEL ADMINISTRATIVO</h3>
                 <div class="input-group">
@@ -601,4 +608,353 @@
                 </div>
                 <div class="input-group">
                     <i class="fa-solid fa-circle-plus"></i>
-                    <input type="number" id="adm-chips-amount" placeholder
+                    <input type="number" id="adm-chips-amount" placeholder="Quantidade de fichas">
+                </div>
+                <button class="btn" style="background: var(--secondary);" id="btn-admin-inject">Injetar Fichas</button>
+            </div>
+            <div id="profile-msg" class="status-msg"></div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE EXECUÇÃO MODERNA DO FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, get, child, update, onValue, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Suas Credenciais Oficiais Atualizadas
+        const firebaseConfig = {
+            apiKey: "AIzaSyB17R9AgUkclGSw7nnLDfO7Yio8Di9P5T0",
+            authDomain: "capital-rp-aa7c6.firebaseapp.com",
+            projectId: "capital-rp-aa7c6",
+            databaseURL: "https://capital-rp-aa7c6-default-rtdb.firebaseio.com", // Adicionado padrão do Firebase
+            storageBucket: "capital-rp-aa7c6.firebasestorage.app",
+            messagingSenderId: "605631037077",
+            appId: "1:605631037077:web:54e868801450b9ed6d259c",
+            measurementId: "G-XYZK98QXLG"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let currentAuthMode = 'login';
+        let currentUser = null;
+        let selectedBet = 5;
+
+        const TIGER_ICONS = [
+            { icon: '<i class="fa-solid fa-gem" style="color:#00e5ff;"></i>', name: 'diamante', multi: 5 },
+            { icon: '<i class="fa-solid fa-crown" style="color:#ffd700;"></i>', name: 'coroa', multi: 3 },
+            { icon: '<i class="fa-solid fa-coins" style="color:#ff9900;"></i>', name: 'moedas', multi: 2 },
+            { icon: '<i class="fa-solid fa-bomb" style="color:#cc0000;"></i>', name: 'bomba', multi: 0 }
+        ];
+
+        // Controle do Loading
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('loading-screen');
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                    checkSession();
+                }, 500);
+            }, 5000);
+        });
+
+        // Alternador Abas de Entrada
+        document.getElementById('tab-login').addEventListener('click', () => switchAuthTab('login'));
+        document.getElementById('tab-register').addEventListener('click', () => switchAuthTab('register'));
+
+        function switchAuthTab(mode) {
+            currentAuthMode = mode;
+            document.getElementById('auth-msg').innerText = '';
+            if(mode === 'login') {
+                document.getElementById('tab-login').classList.add('active');
+                document.getElementById('tab-register').classList.remove('active');
+                document.getElementById('auth-title').innerText = 'ENTRAR NA CONTA';
+                document.getElementById('auth-submit-btn').innerText = 'Entrar';
+            } else {
+                document.getElementById('tab-register').classList.add('active');
+                document.getElementById('tab-login').classList.remove('active');
+                document.getElementById('auth-title').innerText = 'REGISTRAR NOVA CONTA';
+                document.getElementById('auth-submit-btn').innerText = 'Criar Conta';
+            }
+        }
+
+        // Fluxo de Cadastro e Login
+        document.getElementById('auth-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const user = document.getElementById('auth-username').value.trim();
+            const pass = document.getElementById('auth-password').value;
+            const msg = document.getElementById('auth-msg');
+
+            if(!user || !pass) return;
+            const cleanUser = user.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+            const userRef = ref(db, 'users/' + cleanUser);
+            get(userRef).then((snapshot) => {
+                const userData = snapshot.val();
+
+                if(currentAuthMode === 'register') {
+                    if(userData) {
+                        msg.style.color = 'var(--secondary)';
+                        msg.innerText = 'Este usuário já está cadastrado!';
+                        return;
+                    }
+                    set(userRef, {
+                        username: user,
+                        password: pass,
+                        chips: 50,
+                        isAdmin: false,
+                        lastDaily: new Date().getTime()
+                    }).then(() => {
+                        msg.style.color = '#25D366';
+                        msg.innerText = 'Cadastro feito! Mude para o Login.';
+                        switchAuthTab('login');
+                    });
+                } else {
+                    if(!userData || userData.password !== pass) {
+                        msg.style.color = 'var(--secondary)';
+                        msg.innerText = 'Usuário ou senha incorretos!';
+                        return;
+                    }
+                    currentUser = cleanUser;
+                    localStorage.setItem('capital_rp_session_id', cleanUser);
+                    enterMainDashboard();
+                }
+            });
+        });
+
+        function checkSession() {
+            const sessionID = localStorage.getItem('capital_rp_session_id');
+            if(sessionID) {
+                get(ref(db, 'users/' + sessionID)).then((snapshot) => {
+                    if(snapshot.exists()) {
+                        currentUser = sessionID;
+                        enterMainDashboard();
+                    } else {
+                        document.getElementById('auth-screen').style.display = 'flex';
+                    }
+                });
+            } else {
+                document.getElementById('auth-screen').style.display = 'flex';
+            }
+        }
+
+        function enterMainDashboard() {
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('main-screen').style.display = 'block';
+            
+            onValue(ref(db, 'users/' + currentUser), (snapshot) => {
+                const data = snapshot.val();
+                if(data) {
+                    document.getElementById('global-chips-counter').innerText = data.chips;
+                    document.getElementById('header-username').innerText = data.username;
+                    document.getElementById('profile-name-display').innerText = data.username;
+                    
+                    if(data.isAdmin) {
+                        document.getElementById('profile-role-display').innerHTML = '<span style="color:var(--secondary); font-weight:bold;">Administrador</span>';
+                        document.getElementById('admin-activation-zone').style.display = 'none';
+                        document.getElementById('admin-panel').style.display = 'block';
+                    } else {
+                        document.getElementById('profile-role-display').innerText = 'Membro';
+                        document.getElementById('admin-activation-zone').style.display = 'block';
+                        document.getElementById('admin-panel').style.display = 'none';
+                    }
+                }
+            });
+
+            claimDailyReward();
+            startRankingListener();
+        }
+
+        function claimDailyReward() {
+            get(ref(db, 'users/' + currentUser)).then((snapshot) => {
+                const account = snapshot.val();
+                const now = new Date().getTime();
+                const umDia = 24 * 60 * 60 * 1000;
+
+                if (!account.lastDaily || (now - account.lastDaily >= umDia)) {
+                    update(ref(db, 'users/' + currentUser), {
+                        chips: account.chips + 50,
+                        lastDaily: now
+                    });
+                    alert(`Olá, ${account.username}! Você recebeu suas 50 fichas gratuitas diárias! 🎰`);
+                }
+            });
+        }
+
+        // O RANKING ATUALIZADO (CONECTADO E OPERANDO EM V10)
+        function startRankingListener() {
+            const usersRef = ref(db, 'users');
+            const rankingQuery = query(usersRef, orderByChild('chips'), limitToLast(10));
+            
+            onValue(rankingQuery, (snapshot) => {
+                let list = [];
+                snapshot.forEach((childSnapshot) => {
+                    list.push(childSnapshot.val());
+                });
+                
+                list.reverse();
+                const rankingBody = document.getElementById('ranking-body');
+                rankingBody.innerHTML = '';
+
+                list.forEach((player, index) => {
+                    let posClass = "";
+                    let posText = index + 1;
+
+                    if(index === 0) posClass = "class='podium-1'";
+                    else if(index === 1) posClass = "class='podium-2'";
+                    else if(index === 2) posClass = "class='podium-3'";
+
+                    rankingBody.innerHTML += `
+                        <tr>
+                            <td ${posClass}>${posText}º</td>
+                            <td style="font-weight: 500;">${player.username}</td>
+                            <td style="text-align: right; font-weight: bold; color: var(--primary);">${player.chips}</td>
+                        </tr>
+                    `;
+                });
+            });
+        }
+
+        // Modais Triggers
+        document.getElementById('btn-shop').addEventListener('click', () => openModal('shop-modal'));
+        document.getElementById('btn-profile').addEventListener('click', () => openModal('profile-modal'));
+        document.getElementById('btn-game').addEventListener('click', () => openModal('tiger-modal'));
+        document.getElementById('close-tiger').addEventListener('click', () => closeModal('tiger-modal'));
+        document.getElementById('close-shop').addEventListener('click', () => closeModal('shop-modal'));
+        document.getElementById('close-profile').addEventListener('click', () => closeModal('profile-modal'));
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // Escolha de Valores de Aposta
+        const betButtons = document.querySelectorAll('.bet-option');
+        betButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                selectedBet = parseInt(e.target.getAttribute('data-value'));
+                betButtons.forEach(b => b.classList.remove('selected'));
+                e.target.classList.add('selected');
+            });
+        });
+
+        // Roleta Fortune Tiger
+        document.getElementById('spin-btn').addEventListener('click', () => {
+            const msg = document.getElementById('game-msg');
+            const spinBtn = document.getElementById('spin-btn');
+
+            get(ref(db, 'users/' + currentUser)).then((snapshot) => {
+                const account = snapshot.val();
+                if(account.chips < selectedBet) {
+                    msg.style.color = 'var(--secondary)';
+                    msg.innerText = 'Fichas insuficientes!';
+                    return;
+                }
+
+                update(ref(db, 'users/' + currentUser), { chips: account.chips - selectedBet });
+                msg.innerText = 'Girando os rolos... 🐯';
+                spinBtn.disabled = true;
+
+                for(let i=1; i<=3; i++) document.getElementById(`slot${i}`).classList.remove('winner');
+
+                let count = 0;
+                let interval = setInterval(() => {
+                    document.getElementById('slot1').innerHTML = TIGER_ICONS[Math.floor(Math.random() * TIGER_ICONS.length)].icon;
+                    document.getElementById('slot2').innerHTML = TIGER_ICONS[Math.floor(Math.random() * TIGER_ICONS.length)].icon;
+                    document.getElementById('slot3').innerHTML = TIGER_ICONS[Math.floor(Math.random() * TIGER_ICONS.length)].icon;
+                    count++;
+                    if(count > 10) {
+                        clearInterval(interval);
+                        finalizeSpin(account.chips - selectedBet, msg, spinBtn);
+                    }
+                }, 100);
+            });
+        });
+
+        function finalizeSpin(currentChips, msg, spinBtn) {
+            const res1 = TIGER_ICONS[Math.floor(Math.random() * TIGER_ICONS.length)];
+            const res2 = TIGER_ICONS[Math.floor(Math.random() * TIGER_ICONS.length)];
+            const res3 = TIGER_ICONS[Math.floor(Math.random() * TIGER_ICONS.length)];
+
+            document.getElementById('slot1').innerHTML = res1.icon;
+            document.getElementById('slot2').innerHTML = res2.icon;
+            document.getElementById('slot3').innerHTML = res3.icon;
+
+            let novoSaldo = currentChips;
+
+            if(res1.name === 'bomba' || res2.name === 'bomba' || res3.name === 'bomba') {
+                msg.style.color = 'var(--secondary)';
+                msg.innerHTML = '<i class="fa-solid fa-explosion"></i> BOOM! A bomba tirou seus ganhos!';
+            }
+            else if(res1.name === res2.name && res2.name === res3.name) {
+                let premiacao = selectedBet * res1.multi;
+                novoSaldo += premiacao;
+                msg.style.color = '#25D366';
+                msg.innerHTML = `<i class="fa-solid fa-trophy"></i> COMBINAÇÃO PERFEITA! +${premiacao} fichas!`;
+                for(let i=1; i<=3; i++) document.getElementById(`slot${i}`).classList.add('winner');
+            }
+            else if(res1.name === res2.name || res2.name === res3.name || res1.name === res3.name) {
+                let premiacao = Math.floor(selectedBet * 1.5);
+                novoSaldo += premiacao;
+                msg.style.color = '#ff9900';
+                msg.innerHTML = `<i class="fa-solid fa-coins"></i> Par parcial! +${premiacao} fichas!`;
+            }
+            else {
+                msg.style.color = '#888';
+                msg.innerText = 'Não foi dessa vez!';
+            }
+
+            update(ref(db, 'users/' + currentUser), { chips: novoSaldo });
+            spinBtn.disabled = false;
+        }
+
+        // Ativação do Código de ADM
+        document.getElementById('btn-verify-admin').addEventListener('click', () => {
+            const codeInput = document.getElementById('admin-code-input').value;
+            const msg = document.getElementById('profile-msg');
+
+            if(codeInput === '2012') {
+                update(ref(db, 'users/' + currentUser), { isAdmin: true });
+                msg.style.color = '#25D366';
+                msg.innerText = 'Acesso administrativo concedido!';
+                document.getElementById('admin-code-input').value = '';
+            } else {
+                msg.style.color = 'var(--secondary)';
+                msg.innerText = 'Código inválido!';
+            }
+        });
+
+        // Comando Injetar Fichas do ADM
+        document.getElementById('btn-admin-inject').addEventListener('click', () => {
+            const targetUser = document.getElementById('adm-target-user').value.trim();
+            const amount = parseInt(document.getElementById('adm-chips-amount').value);
+            const msg = document.getElementById('profile-msg');
+
+            if(!targetUser || isNaN(amount) || amount <= 0) {
+                msg.style.color = 'var(--secondary)';
+                msg.innerText = 'Preencha os dados corretamente!';
+                return;
+            }
+
+            const cleanTarget = targetUser.toLowerCase().replace(/[^a-z0-9]/g, "");
+            const targetRef = ref(db, 'users/' + cleanTarget);
+
+            get(targetRef).then((snapshot) => {
+                if(!snapshot.exists()) {
+                    msg.style.color = 'var(--secondary)';
+                    msg.innerText = 'Jogador não encontrado no Banco de Dados global!';
+                    return;
+                }
+
+                const currentChips = snapshot.val().chips;
+                update(targetRef, { chips: currentChips + amount }).then(() => {
+                    msg.style.color = '#25D366';
+                    msg.innerText = `Sucesso! Adicionadas ${amount} fichas para ${snapshot.val().username}.`;
+                    document.getElementById('adm-target-user').value = '';
+                    document.getElementById('adm-chips-amount').value = '';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+
