@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CAPITAL ROLEPLAY BET</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
         :root {
             --bg-color: #0d0d0d;
@@ -214,9 +218,7 @@
             transition: 0.3s;
         }
 
-        .chips-display i {
-            color: var(--primary);
-        }
+        .chips-display i { color: var(--primary); }
 
         .chips-display:hover {
             background-color: var(--primary);
@@ -292,6 +294,54 @@
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
+
+        /* 🏆 SEÇÃO DE RANKING TOP 10 🏆 */
+        .ranking-box {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        }
+
+        .ranking-title {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ranking-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .ranking-table th, .ranking-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #222;
+        }
+
+        .ranking-table th {
+            color: #888;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .ranking-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .podium-1 { color: #ffd700; font-weight: bold; }
+        .podium-2 { color: #c0c0c0; font-weight: bold; }
+        .podium-3 { color: #cd7f32; font-weight: bold; }
 
         /* MODAL DO JOGO DO TIGRINHO */
         .modal {
@@ -468,6 +518,22 @@
                 <h2 style="text-transform: uppercase; font-weight: 900; letter-spacing: 1px;">Fortune Tiger Capital</h2>
                 <p style="color: #888; font-size: 0.9rem; margin-top: 5px;">Multiplique suas fichas no Tigrinho do Servidor</p>
             </div>
+
+            <div class="ranking-box">
+                <div class="ranking-title"><i class="fa-solid fa-trophy"></i> TOP 10 RICASSO DA CAPITAL</div>
+                <table class="ranking-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">Pos</th>
+                            <th>Jogador</th>
+                            <th style="text-align: right;"><i class="fa-solid fa-coins"></i> Fichas</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ranking-body">
+                        <tr><td colspan="3" style="text-align:center; color:#666;">Carregando ranking...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -531,330 +597,8 @@
                 <h3 style="color: var(--secondary); margin-bottom: 15px;"><i class="fa-solid fa-crown"></i> PAINEL ADMINISTRATIVO</h3>
                 <div class="input-group">
                     <i class="fa-solid fa-user-tag"></i>
-                    <input type="text" id="adm-target-user" placeholder="Nome do jogador">
+                    <input type="text" id="adm-target-user" placeholder="Nome exato do jogador">
                 </div>
                 <div class="input-group">
                     <i class="fa-solid fa-circle-plus"></i>
-                    <input type="number" id="adm-chips-amount" placeholder="Quantidade de fichas">
-                </div>
-                <button class="btn" style="background: var(--secondary);" onclick="executeAdminAddChips()">Injetar Fichas</button>
-            </div>
-            <div id="profile-msg" class="status-msg"></div>
-        </div>
-    </div>
-
-    <script>
-        // ESTADO GLOBAL DO SISTEMA
-        let currentAuthMode = 'login';
-        let currentUser = null;
-        let selectedBet = 5;
-
-        // ÍCONES USADOS NO JOGO DO TIGRINHO
-        const TIGER_ICONS = [
-            { icon: '<i class="fa-solid fa-gem" style="color:#00e5ff;"></i>', name: 'diamante', multi: 5 },
-            { icon: '<i class="fa-solid fa-crown" style="color:#ffd700;"></i>', name: 'coroa', multi: 3 },
-            { icon: '<i class="fa-solid fa-coins" style="color:#ff9900;"></i>', name: 'moedas', multi: 2 },
-            { icon: '<i class="fa-solid fa-bomb" style="color:#cc0000;"></i>', name: 'bomba', multi: 0 }
-        ];
-
-        // 1. TIMEOUT DA TELA DE LOADING (5 SEGUNDOS)
-        window.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                const loadingScreen = document.getElementById('loading-screen');
-                loadingScreen.style.opacity = '0';
-                setTimeout(() => {
-                    loadingScreen.style.display = 'none';
-                    // Inicia verificando se já existe sessão ativa
-                    checkSession();
-                }, 500);
-            }, 5000);
-        });
-
-        // REGRAS DE ALTERNÂNCIA DA TELA DE AUTH
-        function switchAuthTab(mode) {
-            currentAuthMode = mode;
-            const tabs = document.querySelectorAll('.auth-tab');
-            const title = document.getElementById('auth-title');
-            const btn = document.getElementById('auth-submit-btn');
-            
-            tabs.forEach(t => t.classList.remove('active'));
-            document.getElementById('auth-msg').innerText = '';
-
-            if(mode === 'login') {
-                tabs[0].classList.add('active');
-                title.innerText = 'ENTRAR NA CONTA';
-                btn.innerText = 'Entrar';
-            } else {
-                tabs[1].classList.add('active');
-                title.innerText = 'REGISTRAR NOVA CONTA';
-                btn.innerText = 'Criar Conta';
-            }
-        }
-
-        // LÓGICA DE LOGIN E REGISTRO USANDO LOCALSTORAGE
-        function handleAuth(e) {
-            e.preventDefault();
-            const user = document.getElementById('auth-username').value.trim();
-            const pass = document.getElementById('auth-password').value;
-            const msg = document.getElementById('auth-msg');
-
-            if(!user || !pass) return;
-
-            let db = JSON.parse(localStorage.getItem('capital_rp_users')) || {};
-
-            if(currentAuthMode === 'register') {
-                if(db[user.toLowerCase()]) {
-                    msg.style.color = 'var(--secondary)';
-                    msg.innerText = 'Este usuário já está cadastrado!';
-                    return;
-                }
-                // Cria novo perfil com direito a recompensa diária instantânea
-                db[user.toLowerCase()] = {
-                    username: user,
-                    password: pass,
-                    chips: 0,
-                    isAdmin: false,
-                    lastDaily: 0
-                };
-                localStorage.setItem('capital_rp_users', JSON.stringify(db));
-                msg.style.color = '#25D366';
-                msg.innerText = 'Cadastro feito! Mude para o Login e entre.';
-                switchAuthTab('login');
-            } else {
-                // Modo Login
-                const account = db[user.toLowerCase()];
-                if(!account || account.password !== pass) {
-                    msg.style.color = 'var(--secondary)';
-                    msg.innerText = 'Usuário ou senha incorretos!';
-                    return;
-                }
-                
-                // Sucesso no login
-                currentUser = account.username;
-                localStorage.setItem('capital_rp_session', currentUser);
-                msg.innerText = '';
-                enterMainDashboard();
-            }
-        }
-
-        function checkSession() {
-            const session = localStorage.getItem('capital_rp_session');
-            if(session) {
-                let db = JSON.parse(localStorage.getItem('capital_rp_users')) || {};
-                if(db[session.toLowerCase()]) {
-                    currentUser = db[session.toLowerCase()].username;
-                    enterMainDashboard();
-                    return;
-                }
-            }
-            document.getElementById('auth-screen').style.display = 'flex';
-        }
-
-        function enterMainDashboard() {
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('main-screen').style.display = 'block';
-            
-            // Processa o Bônus de Login de 50 fichas por dia
-            claimDailyReward();
-            updateUI();
-        }
-
-        // SISTEMA DE RECOMPENSA DIÁRIA (50 FICHAS A CADA 24 HORAS)
-        function claimDailyReward() {
-            let db = JSON.parse(localStorage.getItem('capital_rp_users'));
-            let account = db[currentUser.toLowerCase()];
-            const now = new Date().getTime();
-            const umDia = 24 * 60 * 60 * 1000; // Milissegundos em um dia
-
-            if (now - account.lastDaily >= umDia) {
-                account.chips += 50;
-                account.lastDaily = now;
-                db[currentUser.toLowerCase()] = account;
-                localStorage.setItem('capital_rp_users', JSON.stringify(db));
-                alert(`Olá, ${account.username}! Você recebeu suas 50 fichas gratuitas do dia! 🎰`);
-            }
-        }
-
-        // ATUALIZADOR INTERFACE GRÁFICA DO CONTEXTO DO USUÁRIO
-        function updateUI() {
-            let db = JSON.parse(localStorage.getItem('capital_rp_users'));
-            let account = db[currentUser.toLowerCase()];
-
-            document.getElementById('global-chips-counter').innerText = account.chips;
-            document.getElementById('header-username').innerText = account.username;
-            document.getElementById('profile-name-display').innerText = account.username;
-            
-            if(account.isAdmin) {
-                document.getElementById('profile-role-display').innerHTML = '<span style="color:var(--secondary); font-weight:bold;">Administrador</span>';
-                document.getElementById('admin-activation-zone').style.display = 'none';
-                document.getElementById('admin-panel').style.display = 'block';
-            } else {
-                document.getElementById('profile-role-display').innerText = 'Membro';
-                document.getElementById('admin-activation-zone').style.display = 'block';
-                document.getElementById('admin-panel').style.display = 'none';
-            }
-        }
-
-        // GESTÃO DOS MODAIS DO SISTEMA
-        function openModal(id) {
-            document.getElementById(id).style.display = 'flex';
-            document.getElementById('profile-msg').innerText = '';
-            document.getElementById('game-msg').innerText = '';
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
-        }
-
-        // SELETOR DA APOSTA DO TIGRINHO
-        function setBet(amount) {
-            selectedBet = amount;
-            const buttons = document.querySelectorAll('.bet-option');
-            buttons.forEach(b => {
-                if(parseInt(b.innerText) === amount) {
-                    b.classList.add('selected');
-                } else {
-                    b.classList.remove('selected');
-                }
-            });
-        }
-
-        // ENGENHARIA DE GIRO DO JOGO FORTUNE TIGER
-        function spinTiger() {
-            let db = JSON.parse(localStorage.getItem('capital_rp_users'));
-            let account = db[currentUser.toLowerCase()];
-            const msg = document.getElementById('game-msg');
-            const spinBtn = document.getElementById('spin-btn');
-
-            if(account.chips < selectedBet) {
-                msg.style.color = 'var(--secondary)';
-                msg.innerText = 'Você não possui fichas suficientes para esta aposta!';
-                return;
-            }
-
-            // Consome a aposta do saldo do jogador
-            account.chips -= selectedBet;
-            db[currentUser.toLowerCase()] = account;
-            localStorage.setItem('capital_rp_users', JSON.stringify(db));
-            updateUI();
-
-            msg.innerText = 'Girando os rolos... 🐯';
-            spinBtn.disabled = true;
-
-            // Remove marcações de vitórias passadas
-            for(let i=1; i<=3; i++) {
-                document.getElementById(`slot${i}`).classList.remove('winner');
-            }
-
-            // Efeito visual simulado rodando rápido
-            let count = 0;
-            let interval = setInterval(() => {
-                document.getElementById('slot1').innerHTML = TIGER_ICONS[Math.floor(Math.random() * TIGER_ICONS.length)].icon;
-                document.getElementById('slot2').innerHTML = TIGER_ICONS[Math.floor(Math.random() * TIGER_ICONS.length)].icon;
-                document.getElementById('slot3').innerHTML = TIGER_ICONS[Math.floor(Math.random() * TIGER_ICONS.length)].icon;
-                count++;
-                if(count > 10) {
-                    clearInterval(interval);
-                    finalizeSpin(db, account, msg, spinBtn);
-                }
-            }, 100);
-        }
-
-        function finalizeSpin(db, account, msg, spinBtn) {
-            // Sorteio definitivo final
-            const res1 = TIGER_ICONS[Math.floor(Math.random() * TIGER_ICONS.length)];
-            const res2 = TIGER_ICONS[Math.floor(Math.random() * TIGER_ICONS.length)];
-            const res3 = TIGER_ICONS[Math.floor(Math.random() * TIGER_ICONS.length)];
-
-            document.getElementById('slot1').innerHTML = res1.icon;
-            document.getElementById('slot2').innerHTML = res2.icon;
-            document.getElementById('slot3').innerHTML = res3.icon;
-
-            // Verifica se o jogador puxou alguma bomba
-            if(res1.name === 'bomba' || res2.name === 'bomba' || res3.name === 'bomba') {
-                msg.style.color = 'var(--secondary)';
-                msg.innerHTML = '<i class="fa-solid fa-explosion"></i> BOOM! A bomba explodiu seus ganhos!';
-            }
-            // Vitória Máxima: 3 Símbolos iguais
-            else if(res1.name === res2.name && res2.name === res3.name) {
-                let premiacao = selectedBet * res1.multi;
-                account.chips += premiacao;
-                msg.style.color = '#25D366';
-                msg.innerHTML = `<i class="fa-solid fa-trophy"></i> COMBINAÇÃO PERFEITA! Você ganhou ${premiacao} fichas!`;
-                
-                // Destaca os blocos vencedores
-                for(let i=1; i<=3; i++) document.getElementById(`slot${i}`).classList.add('winner');
-            }
-            // Vitória Parcial: Pelo menos 2 símbolos iguais (e sem bombas)
-            else if(res1.name === res2.name || res2.name === res3.name || res1.name === res3.name) {
-                let premiacao = Math.floor(selectedBet * 1.5);
-                account.chips += premiacao;
-                msg.style.color = '#ff9900';
-                msg.innerHTML = `<i class="fa-solid fa-coins"></i> Par parcial! Você recuperou e ganhou ${premiacao} fichas!`;
-            }
-            else {
-                msg.style.color = '#888';
-                msg.innerText = 'Não foi dessa vez. Tente girar novamente!';
-            }
-
-            // Atualiza o banco de dados local com as novas fichas obtidas
-            db[currentUser.toLowerCase()] = account;
-            localStorage.setItem('capital_rp_users', JSON.stringify(db));
-            updateUI();
-            spinBtn.disabled = false;
-        }
-
-        // SISTEMA DO CÓDIGO OCULTO DE ADM (CONFORME REQUISITADO: 2012)
-        function checkAdminCode() {
-            const codeInput = document.getElementById('admin-code-input').value;
-            const msg = document.getElementById('profile-msg');
-
-            if(codeInput === '2012') {
-                let db = JSON.parse(localStorage.getItem('capital_rp_users'));
-                db[currentUser.toLowerCase()].isAdmin = true;
-                localStorage.setItem('capital_rp_users', JSON.stringify(db));
-                msg.style.color = '#25D366';
-                msg.innerText = 'Acesso administrativo concedido com sucesso!';
-                document.getElementById('admin-code-input').value = '';
-                updateUI();
-            } else {
-                msg.style.color = 'var(--secondary)';
-                msg.innerText = 'Código inválido para este nível!';
-            }
-        }
-
-        // FUNÇÃO DO ADMINISTRADOR PARA INJETAR FICHAS EM OUTROS JOGADORES
-        function executeAdminAddChips() {
-            const targetUser = document.getElementById('adm-target-user').value.trim().toLowerCase();
-            const amount = parseInt(document.getElementById('adm-chips-amount').value);
-            const msg = document.getElementById('profile-msg');
-
-            if(!targetUser || isNaN(amount) || amount <= 0) {
-                msg.style.color = 'var(--secondary)';
-                msg.innerText = 'Preencha todos os dados corretamente!';
-                return;
-            }
-
-            let db = JSON.parse(localStorage.getItem('capital_rp_users')) || {};
-
-            if(!db[targetUser]) {
-                msg.style.color = 'var(--secondary)';
-                msg.innerText = 'Jogador alvo não encontrado no sistema!';
-                return;
-            }
-
-            // Injecao das fichas
-            db[targetUser].chips += amount;
-            localStorage.setItem('capital_rp_users', JSON.stringify(db));
-            
-            msg.style.color = '#25D366';
-            msg.innerText = `Sucesso! Foram adicionadas ${amount} fichas na conta de ${db[targetUser].username}.`;
-            
-            document.getElementById('adm-target-user').value = '';
-            document.getElementById('adm-chips-amount').value = '';
-            
-            updateUI();
-        }
-    </script>
-</body>
-</html>
+                    <input type="number" id="adm-chips-amount" placeholder
